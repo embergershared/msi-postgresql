@@ -12,21 +12,19 @@ namespace ConsoleApp
   {
     private static async Task Main(string[] args)
     {
-      #region Initialization
-      // Configuration: Managed by Host.CreateDefaultBuilder
-      var host = CreateHostBuilder(args).Build();
-      #endregion
+        #region Initialization
+        // Configuration: Managed by Host.CreateDefaultBuilder
+        var host = CreateHostBuilder(args).Build();
+        #endregion
 
-      // Adding logger and logging 
-      var logger = host.Services.GetRequiredService<ILogger<Program>>();
-      logger.LogInformation($"Main({args}) started");
+        // Adding logger and logging 
+        var logger = host.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation($"Main({args}) started");
 
-      // var console = host.Services.GetRequiredService<IConsole>();
-      // _ = await console.RunAsync();
+        var console = host.Services.GetRequiredService<IConsole>();
+        _ = await console.RunAsync();
 
-      //await host.RunAsync();
-
-      logger.LogInformation($"Main({args}) finished");
+        logger.LogInformation($"Main({args}) finished");
     }
 
     private static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -35,7 +33,7 @@ namespace ConsoleApp
                 .ConfigureServices((_, services) =>
                 {
                   services
-                      // .AddTransient<IShowInfos, ShowInfos>()
+                      .AddTransient<IPostgreSql, PostgreSQL>()
                       .AddTransient<IConsole, Console>();
                 })
                 .ConfigureLogging((_, logging) =>

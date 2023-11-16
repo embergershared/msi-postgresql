@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using ConsoleApp.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -11,17 +12,17 @@ namespace ConsoleApp.Classes
     {
         private readonly ILogger<Console> _logger;
         private readonly IConfiguration _config;
-        private readonly IShowInfos _showInfos;
+        private readonly IPostgreSql _postgreSql;
 
         public Console(
             ILogger<Console> logger,
             IConfiguration config,
-            IShowInfos showInfos
+            IPostgreSql postgreSql
         )
         {
             _logger = logger;
             _config = config;
-            _showInfos = showInfos;
+            _postgreSql = postgreSql;
         }
 
         public async Task<bool> RunAsync()
@@ -30,9 +31,18 @@ namespace ConsoleApp.Classes
             {
                 _logger.LogTrace("Method start");
 
-                _logger.LogDebug("Launching showInfos.Show()");
-                _showInfos.Show();
-                _logger.LogDebug("Exited showInfos.Show()");
+                _logger.LogInformation("Loading Environment variables");
+
+                Environment.SetEnvironmentVariable("AZURE_TENANT_ID", "Value1");
+                Environment.SetEnvironmentVariable("AZURE_CLIENT_ID", "Value1");
+                Environment.SetEnvironmentVariable("AZURE_CLIENT_SECRET", "Value1");
+
+
+
+
+                _logger.LogDebug("Launching PostgreSql.ConnectAsync()");
+                await _postgreSql.ConnectAsync();
+                _logger.LogDebug("Exited PostgreSql.ConnectAsync()");
 
                 // await DoSomethingAsync()
 
