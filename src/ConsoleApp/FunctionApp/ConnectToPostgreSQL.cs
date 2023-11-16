@@ -17,8 +17,8 @@ namespace FunctionApp
     {
         // https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/how-to-connect-with-managed-identity?source=recommendations#connect-using-managed-identity-in-c
         private static string Host = "pgresql-azdb.postgres.database.azure.com";
-        private static string User = "azfunction-msi-user";
-        private static string Database = "msi_test_db";
+        private static string User = "user1";
+        private static string Database = "newdb";
         private static readonly string _nl = Environment.NewLine;
 
         [FunctionName("ConnectToPostgreSQL")]
@@ -75,25 +75,57 @@ namespace FunctionApp
                     Database,
                     5432,
                     accessToken);
-            msg = $"Connection string built:{_nl}{connString}{ _nl}";
+            msg = $"Connection string built:{_nl}{connString}{_nl}{_nl}";
             log.LogInformation(msg);
             responseMessage += msg;
 
-            //await using (var conn = new NpgsqlConnection(connString))
-            //{
-            //    log.LogInformation("Opening connection using access token");
-            //    conn.Open();
+            await using (var conn = new NpgsqlConnection(connString))
+            {
+                msg = $"Opening connection using access token{_nl}";
+                log.LogInformation(msg);
+                responseMessage += msg;
 
-            //    await using (var command = new NpgsqlCommand("SELECT version()", conn))
-            //    {
+                try
+                {
+                    conn.Open();
+                }
+                catch (Exception e)
+                {
+                    msg = $"{e.Message} {_nl}";
+                    _ = e.InnerException != null ? e.InnerException.Message : "Opening connection failed";
+                    _ = _nl;
 
-            //        var reader = command.ExecuteReader();
-            //        while (reader.Read())
-            //        {
-            //            log.LogInformation("\nConnected!\n\nPostgres version: {0}", reader.GetString(0));
-            //        }
-            //    }
-            //}
+                    log.LogError(msg);
+                    responseMessage += msg;
+                }
+
+                msg = $"Getting Postgres version{_nl}{_nl}";
+                log.LogInformation(msg);
+                responseMessage += msg;
+
+                await using (var command = new NpgsqlCommand("SELECT version()", conn))
+                {
+                    try
+                    {
+                        var reader = command.ExecuteReader();
+                        while (reader.Read())
+                        {
+                            msg = string.Format("\nConnected!\n\nPostgres version: {0}", reader.GetString(0));
+                            log.LogInformation(msg);
+                            responseMessage += msg;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        msg = $"{e.Message} {_nl}";
+                        _ = e.InnerException != null ? e.InnerException.Message : "Getting Postgres version failed";
+                        _ = _nl;
+
+                        log.LogError(msg);
+                        responseMessage += msg;
+                    }
+                }
+            }
 
             //string name = req.Query["name"];
 
