@@ -14,9 +14,9 @@ namespace FunctionApp
     public static class ConnectToPostgreSql
     {
         // https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/how-to-connect-with-managed-identity?source=recommendations#connect-using-managed-identity-in-c
-        private const string Host = "pgresql-azdb.postgres.database.azure.com";
-        private const string User = "msi-postgresql";
-        private const string Database = "test-msi";
+        //private const string Host = "pgresql-azdb.postgres.database.azure.com";
+        //private const string User = "msi-postgresql";
+        //private const string Database = "test-msi";
         private static readonly string Nl = Environment.NewLine;
 
         [FunctionName("ConnectToPostgreSQL")]
@@ -31,6 +31,17 @@ namespace FunctionApp
             var responseMessage = string.Empty;
             var msg = $"C# HTTP trigger of function ConnectToPostgreSQL started to process a request:";
             LogMsg(log, msg, ref responseMessage);
+
+            // Getting Environment variables
+            string[] envVarNames = { "AZDB_PSQL_FL_SERVER", "AZDB_PSQL_USER", "AZDB_PSQL_DB"};
+            foreach (var envVar in envVarNames)
+            {
+                msg = $"Checking Environment variable: {GetEnvironmentVariable(envVar, true)}";
+                LogMsg(log, msg, ref responseMessage);
+            }
+            var dbHost = GetEnvironmentVariable("AZDB_PSQL_FL_SERVER");
+            var dbUser = GetEnvironmentVariable("AZDB_PSQL_USER");
+            var dbName = GetEnvironmentVariable("AZDB_PSQL_DB");
 
             //
             // Get an access token for PostgreSQL.
@@ -62,14 +73,8 @@ namespace FunctionApp
             //
             // Open a connection to the PostgreSQL server using the access token.
             //
-            string connString =
-                String.Format(
-                    "Server={0}; User Id={1}; Database={2}; Port={3}; Password={4}; SSLMode=Prefer",
-                    Host,
-                    User,
-                    Database,
-                    5432,
-                    accessToken);
+            var connString =
+                $"Server={dbHost}; User Id={dbUser}; Database={dbName}; Port={5432}; Password={accessToken}; SSLMode=Prefer";
             msg = $"Connection string built:{Nl}{connString}";
             LogMsg(log, msg, ref responseMessage);
 
@@ -99,7 +104,7 @@ namespace FunctionApp
                         var reader = command.ExecuteReader();
                         while (reader.Read())
                         {
-                            msg = $"Connected to \"{Database}\" database with user \"{User}\"{Nl}Postgres version = {reader.GetString(0)}";
+                            msg = $"Connected to \"{dbName}\" database with user \"{dbUser}\"{Nl}Postgres version = {reader.GetString(0)}";
                             LogMsg(log, msg, ref responseMessage);
                         }
                     }
@@ -137,6 +142,10 @@ namespace FunctionApp
             }
 
             responseMessage += msg + $"{Nl}{Nl}";
+        }
+        private static string GetEnvironmentVariable(string name, bool withName = false)
+        {
+            return withName ? $"{name}({Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process)})" : Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
         }
     }
 }
